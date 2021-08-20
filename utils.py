@@ -1,4 +1,8 @@
-def trans(s, size=64):
+from functools import wraps
+import binascii as ba
+
+
+def trans(s):
     if s.startswith('0x'):
         s = s[2:]
     s = s.rjust(size//4, '0')
@@ -9,11 +13,22 @@ def trans(s, size=64):
     return " ".join(res[::-1])
 
 
-def transs(ss, size=64):
+def transs(ss):
     return ' '.join([trans(i) for i in ss])
 
 
-def show_ida_patch(payload, pos, size=64):
+def show_ida_patch(payload, pos):
+    print("\nshow_ida_patch : ")
     print(pos*'a'+(len(payload)-pos)*'*')
-    print(' '.join(["%02x" % i if id % (size//4) !=
-          0 else "| %02x" % i for id, i in enumerate(payload[pos:])]))
+    res = ' '.join(["%02x" % i if id % (size//4) !=
+          0 else "| %02x" % i for id, i in enumerate(payload[pos:])])
+    [print(i.strip()) for i in res.split('|')]
+
+
+def log(a_func):
+    @wraps(a_func)
+    def decorator(*args):
+        res = a_func(*args)
+        print("{}: {}".format(a_func.__name__,res))
+    return decorator
+
