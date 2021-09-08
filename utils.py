@@ -32,3 +32,8 @@ def log(a_func):
         print("{}: {}".format(a_func.__name__,res))
     return decorator
 
+def nan(a_func):
+    @wraps(a_func)
+    def decorator(*args):
+        res = a_func(*args)
+    return decorator
