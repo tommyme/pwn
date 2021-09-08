@@ -52,7 +52,8 @@ class Loader:
     def patchElf(self,buu=False):
         ogr = self.old_glibc_root
         num = '32' if self.arch == 'i386' else '64'
-        buu_libc = f'~/repo_pwn/buuctf/16/{num}'
+        buu_libc = f'~/repos_pwn/buuctf/16/{num}'
+        print(buu_libc)
         if buu:
             cmd = f"patchelf --set-interpreter {ogr}/ld-2.23.so --set-rpath {buu_libc} {self.root}"
         else:

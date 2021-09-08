@@ -7,7 +7,7 @@ from struct import pack
 from qwq import *
 import os
 loader = Loader("target/easy_pwn", 64)
-loader.patchElf()
+loader.patchElf(buu=True)
 # loader.debug()
 
 log = nan
