@@ -4,20 +4,27 @@ from pwnlib.util.proc import wait_for_debugger
 import os
 
 class Loader:
-    def __init__(self,root,size):
+    def __init__(self,root,size,patch=False):
         self.root = root
         self.size = size
         self.arch = 'amd64' if size == 64 else 'i386'
         context(arch=self.arch,os='linux')
-        self.elf = ELF(self.root)
-        self.old_glibc_root = f'~/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_{self.arch}'
 
-        self.old_glibc_pwnfile = pwnfile = [
-            self.old_glibc_root+'/ld-2.23.so',
+        self.glibc_16_local = f'~/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_{self.arch}'
+        self.glibc_16_pwnfile = [
+            self.glibc_16_local+'/ld-2.23.so',
             '--library-path',
-            self.old_glibc_root,
+            self.glibc_16_local,
             self.root
         ]
+        if patch:
+            """
+            本地的时候先用glibc_AIO来patch
+            本地跑libcSearcher直接选glibc_AIO
+            然后线上的时候libcSearcher直接选buuoj
+            """
+            self.patchElf()
+        self.elf = ELF(self.root)
 
     def debug(self):
         context.log_level = 'debug'
@@ -25,12 +32,14 @@ class Loader:
     def remote(self,port):
         return remote('node4.buuoj.cn', port)
 
-    def process(self,old_glibc=False):
-        if old_glibc:
-            return process(self.old_glibc_pwnfile)
-        return process(self.root)
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
+
+    def process(self):
+        # if old_glibc:
+            # return process(self.glibc_16_pwnfile)
+        return process(self.root)
+
 
     def show_ida_patch_code(self,payload,st_addr):
         payload = ba.hexlify(payload).decode()
@@ -45,14 +54,14 @@ class Loader:
             print("ida_bytes.{}({},0x{})".format(func,hex(st_addr),a))
             st_addr += step
 
-    def ROPgadget(self):
-        print('ROPgadget --binary {} | grep "ret"'.format(self.root))
-        print('ROPgadget --binary {} | grep "pop rdi ; ret"'.format(self.root))
+    # def ROPgadget(self):
+    #     print('ROPgadget --binary {} | grep "ret"'.format(self.root))
+    #     print('ROPgadget --binary {} | grep "pop rdi ; ret"'.format(self.root))
 
     def patchElf(self,buu=False):
-        ogr = self.old_glibc_root
+        ogr = self.glibc_16_local
         num = '32' if self.arch == 'i386' else '64'
-        buu_libc = f'~/repos_pwn/buuctf/16/{num}'
+        buu_libc = f'~/pwn/buuctf/16/{num}'
         print(buu_libc)
         if buu:
             cmd = f"patchelf --set-interpreter {ogr}/ld-2.23.so --set-rpath {buu_libc} {self.root}"

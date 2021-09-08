@@ -6,9 +6,12 @@ from pwnlib.util.proc import wait_for_debugger
 from struct import pack
 from qwq import *
 import os
-loader = Loader("target/easy_pwn", 64)
-loader.patchElf()
+loader = Loader("target/easy_pwn", 64, patch=True)
+elf = loader.elf
+io = loader.process()
+# io = loader.remote(27297)
 # loader.debug()
+
 
 log = nan
 if 1:
@@ -27,13 +30,7 @@ if 1:
     def psize(x): return loader.psize(x)
     def shell(): io.interactive()
     def bt(s): return bytes(str(s),encoding='utf-8')
-# io = process(loader.root,stdin=PTY)
-# wait_for_debugger(io.pid)
 
-io = loader.process(0)
-# io = loader.remote(27297)
-# os.system(f'echo "att {io.pid}" | clip.exe')
-elf = loader.elf
 
 
 def main():
