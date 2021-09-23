@@ -10,7 +10,7 @@ class Loader:
         self.arch = 'amd64' if size == 64 else 'i386'
         context(arch=self.arch,os='linux')
 
-        self.glibc_16_local = f'~/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_{self.arch}'
+        self.glibc_16_local = f'/home/ybw/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_{self.arch}'
         self.glibc_16_pwnfile = [
             self.glibc_16_local+'/ld-2.23.so',
             '--library-path',
