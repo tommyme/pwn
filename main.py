@@ -1,32 +1,61 @@
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
-import angr
-import time
+from pwn import *
+from pwnlib.util.proc import wait_for_debugger
+from struct import pack
+import os
+# from LibcSearcher import *
+from helper.mbuiltins import *
+from helper.utils import log,show_ida_patch,nan
+from helper.loader import Loader
+
+loader = Loader("target/magicheap", 64, patch=True)
+elf = loader.elf
+# io = loader.process()
+io = loader.remote(26914)
+# loader.debug()
 
 
-path = '01_angr_avoid'
-start = time.time()
+log = nan
+if 1:
+    @log
+    def ru(x): return io.recvuntil(x)
+    @log
+    def rl(): return io.recvline()
+    @log
+    def sla(x, y): return io.sendlineafter(x, y)
+    @log
+    def sl(x): return io.sendline(x)
+    @log
+    def s(x): return io.send(x)
+    @log
+    def sa(x, y): return io.sendafter(x, y)
+    def psize(x): return loader.psize(x)
+    def shell(): io.interactive()
+    def bt(s): return bytes(str(s),encoding='utf-8')
 
-p = angr.Project(path)
-init_st = p.factory.entry_state()
-sm = p.factory.simulation_manager(init_st)
 
+def add(size,content):
+    sla(b'choice :',b'1')
+    sla(b'Size of Heap : ',bt(size))
+    sla(b'Content of heap:',content)
 
-def want(st):
-    return b'Good Job' in st.posix.dumps(1)
+def edit(id,size,content):
+    sla(b'choice :',b'2')
+    sla(b'Index :',bt(id))
+    sla(b'Size of Heap : ',bt(size))
+    sla(b'Content of heap : ',content)
 
+def free(id):
+    sla(b'choice :',b'3')
+    sla(b'Index :',bt(id))
 
-def not_want(st):
-    return b'Try again' in st.posix.dumps(1)
-    # return
+def show(id):
+    sla(b'choice :',b'3')
+    sla(b'Index :',bt(id))
+    
+def main():
+    pass
 
-
-sm.explore(find=0x080485E0, avoid=0x080485F2)  # 加入avoid 更快
-
-if sm.found:
-    fs_st = sm.found[0]
-    key = fs_st.posix.dumps(0)  # dumps() 传0表示输入 传1表示输出
-    print('key is {}'.format(key))
-else:
-    print('key not found')
-print('用时', int(time.time()-start), 's')
+    
+    
+if __name__ == "__main__":
+    main()
