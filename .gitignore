@@ -9,7 +9,8 @@ __pycache__/
 *$py.class
 # C extensions
 *.so
-
+target/
+!/target/flag
 # Distribution / packaging
 .Python
 build/
