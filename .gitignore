@@ -9,8 +9,9 @@ __pycache__/
 *$py.class
 # C extensions
 *.so
-target/
-!/target/flag
+target/*
+!target/flag
+.DS_Store
 # Distribution / packaging
 .Python
 build/
@@ -78,7 +79,7 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
-target/
+
 
 # Jupyter Notebook
 .ipynb_checkpoints
