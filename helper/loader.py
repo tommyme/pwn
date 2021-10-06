@@ -10,11 +10,12 @@ class Loader:
         self.size = size
         self.arch = 'amd64' if size == 64 else 'i386'
         context(arch=self.arch,os='linux')
-        self.elf = ELF(self.root)
-        self.libc = self.elf.libc
         if debug:
             context.log_level = 'debug'
-
+    def init(self):
+        self.elf = ELF(self.root)
+        self.libc = self.elf.libc
+        
     def remote(self,site='node4.buuoj.cn',port=0):
         return remote(site, port)
 

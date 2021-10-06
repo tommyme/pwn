@@ -1,3 +1,4 @@
+from pwn import u32, u64
 def abbre(glb,io,loader):
     """
     rl shell ru sl s bt psize sa sla
@@ -11,6 +12,7 @@ def abbre(glb,io,loader):
     glb["psize"]    = lambda x, y : loader.psize(x)
     glb["sa"]       = lambda x, y : io.sendafter(x, y)
     glb["sla"]      = lambda x, y : io.sendlineafter(x, y)
-
+    glb['uu32']     = lambda data : u32(data.ljust(4,b'\x00'))
+    glb['uu64']     = lambda data : u64(data.ljust(8,b'\x00'))
     # for heap
     
