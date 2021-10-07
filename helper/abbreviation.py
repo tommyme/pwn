@@ -1,4 +1,4 @@
-from pwn import u32, u64
+from pwn import u32, u64, pause, success
 def abbre(glb,io,loader):
     """
     rl shell ru sl s bt psize sa sla
@@ -14,5 +14,7 @@ def abbre(glb,io,loader):
     glb["sla"]      = lambda x, y : io.sendlineafter(x, y)
     glb['uu32']     = lambda data : u32(data.ljust(4,b'\x00'))
     glb['uu64']     = lambda data : u64(data.ljust(8,b'\x00'))
+    def f(): success(str(io.pid)); pause()
+    glb['pause']   = f
     # for heap
     

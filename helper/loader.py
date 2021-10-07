@@ -15,18 +15,23 @@ class Loader:
     def init(self):
         self.elf = ELF(self.root)
         self.libc = self.elf.libc
+        return self.elf, self.libc
+
+    def process(self,site='node4.buuoj.cn',port=0):
+        if port:
+            return remote(site, port)
+        return process(self.root)
         
-    def remote(self,site='node4.buuoj.cn',port=0):
-        return remote(site, port)
 
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
 
-    def process(self):
-        # if old_glibc:
-            # return process(self.glibc_16_pwnfile)
-        return process(self.root)
-
+    def ida(self):
+        v = "" if self.arch == "i386" else "64"
+        io = process(f"server/linux_server{v}")
+        io.recvuntil(b"...")
+        io.recvuntil(b"...")
+        return io
 
     def show_ida_patch_code(self,payload,st_addr):
         payload = ba.hexlify(payload).decode()
