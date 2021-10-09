@@ -58,7 +58,7 @@ class Loader:
             warning("不能同时选定buu和自己的libc！")
             exit()
         
-        root = "/home/ybw/repos_pwn/glibc-all-in-one/libs"
+        root = j(os.getenv("HOME"),"repos_pwn/glibc-all-in-one/libs")
         glibc = [i for i in os.listdir(root) if str(ver) in i and self.arch in i][0]
         self.glibc = j(root,glibc)
         self.glibc_ld = self.glibc+f'/ld-{ver}.so'

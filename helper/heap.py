@@ -13,23 +13,24 @@ def menu(glb):
 
     tips = b">> :\n"
     
-    def add(size, data=b"aaaa"):
-        sla(tips, b"1")
-        sla(b"Size: \n", bt(size))
-        sa(b"what's your Content: \n", data)
+    def add(size,payload):
+        sla(b'choice :',b'1')
+        sla(b'size :',bt(size))
+        sla(b'Content :',payload)
 
     def free(idx):
-        sla(tips, b"2")
-        sla(b"Index:\n", bt(idx))
+        sla(b'choice :',b'4')
+        sla(b'Index :',bt(idx))
 
-    def show(idx):
-        sla(tips, b"3")
-        sla(b"Index:\n", bt(idx))
+    def edit(idx,size,content):
+        sla(b'choice :',b'3')
+        sla(b'Index :',bt(idx))
+        sla(b'Size: ',bt(size))
+        sla(b'Content: ',content)
 
-    def edit(idx, data):
-        sla(tips, b"4")
-        sla(b"Index:\n", bt(idx))
-        sa(b"Content:\n", data) 
+    def show(id):
+        sla(b'choice',b"2")
+        sla(b'Index',bt(id))
 
     glb['add'] = add
     glb['free'] = free
