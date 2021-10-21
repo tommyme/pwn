@@ -47,19 +47,25 @@ class Loader:
             st_addr += step
 
 
-    def patch(self,ver:float,libc="",buu=False):
+    def patch_AIO(self,ver:float,num=-1):
         """
-        题目中给了libc就指定libc的路径
-        要是在buu上面做题就用buu官方的libc
-        要是都没给，也可以patch glibcAIO里面的libc
-        ld都是通用的，但是题目里面通常不会给，这里统一采用glibcAIO里面的ld
-        """
-        if libc and buu:
-            warning("不能同时选定buu和自己的libc！")
-            exit()
-        
+        题目中给的libc一般是glibcAIO里面的一种, 
+            buuoj里面ubt18的`glibc`就是AIO的`ubt1-2.27`
+        ld相同版本可以混用
+
+        args:
+        - ver: libc version
+        - num: sub version(eg: 2.27-3ubuntu`1.2`_amd64)
+        """        
+        info("""
+        buu18 libc 对应 AIO 2.27-1
+        buu16 没有对应
+        """)
         root = j(os.getenv("HOME"),"repos_pwn/glibc-all-in-one/libs")
-        glibc = [i for i in os.listdir(root) if str(ver) in i and self.arch in i][0]
+        default_num = {2.23:11.3,2.27:1,2.31:9.2}
+        num = default_num[ver] if num < 0 else num
+        glibc = [i for i in os.listdir(root) if str(ver) in i and f"ubuntu{num}_{self.arch}" in i][0]
+        success(f"going to patch {glibc}...")
         self.glibc = j(root,glibc)
         self.glibc_ld = self.glibc+f'/ld-{ver}.so'
         self.glibc_16_pwnfile = [
@@ -69,16 +75,10 @@ class Loader:
             self.root
         ]
         num = '32' if self.arch == 'i386' else '64'
-        ubt = {'2.23':'16',"2.27":"18"}[str(ver)]
-        buu_libc = f'~/pwn/buuctf/{ubt}/{num}'
-
-        if buu:
-            path = buu_libc
-        elif libc:
-            os.system(f"cp {libc} ./libc/libc.so.6")
-            path = "~/pwn/temp_libc"
-        else:
-            path = self.glibc
-        cmd = f"patchelf --set-interpreter {self.glibc_ld} --set-rpath {path} {self.root}"
+        cmd = f"patchelf --set-interpreter {self.glibc_ld} --set-rpath {self.glibc} {self.root}"
         info(f"patch_cmd: {cmd}")
         os.system(cmd)
+
+    def patch(self):
+        # specify your own libc & specify buuoj libc
+        pass

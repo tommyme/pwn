@@ -11,3 +11,5 @@ def clean(dst, white_list):
 
 clean(j(root, "server"), ["linux_server", "linux_server64"])
 clean(j(root, "target"), [])
+
+# black_list = ["core"]

