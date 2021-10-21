@@ -10,7 +10,6 @@ __pycache__/
 # C extensions
 *.so
 target/*
-!target/flag
 .DS_Store
 # Distribution / packaging
 .Python

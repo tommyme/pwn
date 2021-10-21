@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+import os
+j = os.path.join
+
+root = f"{os.environ['HOME']}/pwn"
+
+def clean(dst, white_list):
+    for i in os.listdir(dst):
+        if i not in white_list:
+            os.remove(j(dst, i))
+
+clean(j(root, "server"), ["linux_server", "linux_server64"])
+clean(j(root, "target"), [])
