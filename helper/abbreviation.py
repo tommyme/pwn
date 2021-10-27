@@ -15,7 +15,7 @@ def abbre(glb,io,loader):
     glb["sla"]      = lambda x, y : io.sendlineafter(x, y)
     glb['uu32']     = lambda data : u32(data.ljust(4,b'\x00'))
     glb['uu64']     = lambda data : u64(data.ljust(8,b'\x00'))
-    def f(): success(str(io.pid)); a = os.system(f"echo 'attach {io.pid}' | clip.exe"); pause(); 
+    def f(): success(str(io.pid)); a = os.system(f"echo 'attach {io.pid}' > .gdbinit"); pause(); 
     glb['pause']   = f
     glb['known_sym'] = lambda x : success(f"{x}: {hex(glb['libc'].sym[x])}")
     # for heap

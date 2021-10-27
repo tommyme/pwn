@@ -17,36 +17,27 @@ def menu(glb):
 
     tips = b">"
     
-    def add(size,content):
-        sla(tips,b'1')
-        sla(tips,bt(size))
-        sla(tips,content)
+    def add(size):
+        sl(b"1")
+        sl(bt(size))
 
     def show(id):
-        sla(tips,b"2")
-        sla(b"|",bt(id))
-        # ru(b"| Content: ")
+        pass
 
     def edit(idx,size,content):
-        sla(tips,b'3')
-        sla(b"|",bt(idx))
-        sa(b"|",bt(size))
-        sla(b"|",content)
+        sl(b'2')
+        sl(bt(idx))
+        sl(bt(size))
+        sl(content)
 
     def free(idx):
-        sla(tips,b'4')
-        sla(b'|',bt(idx))
+        sl(b'3')
 
-    def magic(content):
-        sla(tips,b'6')
-        sl(content)
-        # ru(b"love you !")
         
     glb['add'] = add
     glb['free'] = free
     glb['show'] = show
     glb['edit'] = edit
-    glb['magic'] = magic
 
 
 class heap_helper:

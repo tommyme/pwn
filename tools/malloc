@@ -17,10 +17,12 @@ parser.add_argument('-a','--all',    action="store_true", help="get the whole gl
 args = parser.parse_args()
 
 def download(url, dst):
+   info(f"downloading {url}")
    if not os.path.exists(dst[:dst.rfind("/")]):
       os.makedirs(dst[:dst.rfind("/")])
-   with open(dst,"wb") as f:
-      f.write(r.get(url).content)
+   code = os.system(f"wget '{url}' -O {dst}")
+   return code
+
 
 def malloc_source():
    target_url = "https://sourceware.org/git/?p=glibc.git;a=tags"
@@ -63,13 +65,15 @@ def glibc():
    try:
       info(f"downloading glibc-{args.ver}.tar.gz...")
       dst = f"{os.environ['HOME']}/.glibc/glibc-{args.ver}.tar.gz"
-      download(url, dst)
+      code = download(url, dst)
       info("unziping...")
       os.system(f"tar xf ~/.glibc/glibc-{args.ver}.tar.gz  -C ~/.glibc")
       os.remove(dst)
       info("over.")
+
    except:
-      error("version error or network err")
+      Warning("version error or network err")
+      exit()
 
 if args.ver:
    if args.malloc:
