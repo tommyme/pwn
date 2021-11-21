@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+
+data = {
+    "rsp": 0xa0,
+    "rbx": 0x80,
+    "rbp": 0x78,
+    "r12": 0x48,
+    "r13": 0x50,
+    "r14": 0x58,
+    "r15": 0x60,
+    "rcx_call": 0xa8,
+    "rsi": 0x70,
+    "rdx": 0x88,
+    "rcx": 0x98,
+    "r8": 0x28,
+    "r9": 0x30,
+    "rdi": 0x68
+}
+sorted_data = sorted(data.items(), key=lambda a:a[1])
+for key,value in sorted_data:
+    print(hex(value), key)
+

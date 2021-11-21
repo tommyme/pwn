@@ -1,0 +1,5 @@
+#!/usr/bin/python3
+from pwn import ELF
+import sys
+file = sys.argv[1]
+ELF(file)

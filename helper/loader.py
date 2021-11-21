@@ -2,6 +2,9 @@ from pwn import *
 import binascii as ba
 from pwnlib.util.proc import wait_for_debugger
 import os
+import subprocess
+import re
+from collections import defaultdict, OrderedDict
 j = os.path.join
 
 class Loader:
@@ -9,19 +12,24 @@ class Loader:
         self.root = root
         self.size = size
         self.arch = 'amd64' if size == 64 else 'i386'
+        self.maps = {}
+        self.section = {}
+        self.pid = None
         context(arch=self.arch,os='linux')
         if debug:
             context.log_level = 'debug'
     def init(self):
         self.elf = ELF(self.root)
         self.libc = self.elf.libc
-        return self.elf, self.libc
+        self.rop = ROP(self.root)
+        return self.elf, self.libc, self.rop
 
     def process(self,site='node4.buuoj.cn',port=0):
         if port:
             return remote(site, port)
-        return process(self.root)
-        
+        io = process(self.root)
+        self.pid = io.pid
+        return io
 
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
@@ -47,7 +55,7 @@ class Loader:
             st_addr += step
 
 
-    def patch_AIO(self,ver:float,num=-1):
+    def patch_AIO(self,ver:float,dir="",num=-1):
         """
         题目中给的libc一般是glibcAIO里面的一种, 
             buuoj里面ubt18的`glibc`就是AIO的`ubt1-2.27`
@@ -75,6 +83,7 @@ class Loader:
             self.root
         ]
         num = '32' if self.arch == 'i386' else '64'
+        self.glibc = dir if dir else self.glibc
         cmd = f"patchelf --set-interpreter {self.glibc_ld} --set-rpath {self.glibc} {self.root}"
         info(f"patch_cmd: {cmd}")
         os.system(cmd)
@@ -82,3 +91,62 @@ class Loader:
     def patch(self):
         # specify your own libc & specify buuoj libc
         pass
+    
+    def get_addrs(self, filename:str=None) -> dict:
+        """
+        Read /proc/pid/maps file to get base address. Return a dictionary obtaining keys: 'code',
+        'libc', 'ld', 'stack', 'heap', 'vdso'.
+
+        Returns:
+            dict: All segment address. Key: str, Val: int.
+        """
+        
+        assert isinstance(self.pid, int), "error type!"
+        res = None
+        try:
+            res = subprocess.check_output(["cat", f"/proc/{self.pid}/maps"]).decode().split("\n")
+        except:
+            error(f"cat /proc/{self.pid}/maps failed!")
+        _d = defaultdict(int,{})
+        code_flag = 0
+        libc_flag = 0
+        ld_flag = 0
+
+        for r in res:
+            rc = re.compile(r"^([0123456789abcdef]{6,14})-([0123456789abcdef]{6,14})", re.S)
+            rc = rc.findall(r)
+            if len(rc) != 1 or len(rc[0]) != 2:
+                continue
+            start_addr = int(rc[0][0], base=16)
+            end_addr = int(rc[0][1], base=16)
+
+            if  (not _d['code']) and self.root in r:
+                _d['code'] = start_addr
+            elif (not libc_flag) and ("/libc-2." in r or "/libc.so" in r):
+                libc_flag = 1
+                _d['libc'] = start_addr
+            elif (not ld_flag) and ("/ld-2." in r):
+                ld_flag = 1
+                _d['ld'] = start_addr
+            elif "heap" in r:
+                _d['heap'] = start_addr
+            elif "stack" in r:
+                _d['stack'] = start_addr  
+            elif "vdso" in r:
+                _d['vdso'] = start_addr
+        self.maps.update(_d)
+
+        try:
+            res = subprocess.check_output(["readelf", "-S", self.root]).decode().split("\n")
+        except:
+            error(f"readelf -S {self.root} failed!")
+        
+        for line in res:
+            matched = re.findall(r"\.[a-z\.]+",line)
+            if matched:
+                addr, offset = re.findall(r"[\da-f]{3,}",line)
+                addr = int(addr, 16)
+                self.section[matched[0]] = addr+self.maps["code"]
+
+        
+
