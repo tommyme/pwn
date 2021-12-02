@@ -1,45 +1,27 @@
 from pwn import *
 import os
-def menu(glb):
-    """
-    heap题的menu
-    """
-    # 这里我原来想通过 g = globals(); g = glb来把main里面的各个函数传递到这里，但是后来发现我想错了
-    # 因为g = glb这种写法就是把g当成一个指针，并没有改变当前的globals()
-    # 所以只有通过g.update(glb)这种方式才能把字典复制过来，
-    # 但是我感觉开销略大所以还是直接一个个赋值吧
+# def menu(glb):
+#     """
+#     heap题的menu
+#     """
+#     # 这里我原来想通过 g = globals(); g = glb来把main里面的各个函数传递到这里，但是后来发现我想错了
+#     # 因为g = glb这种写法就是把g当成一个指针，并没有改变当前的globals()
+#     # 所以只有通过g.update(glb)这种方式才能把字典复制过来，
+#     # 但是我感觉开销略大所以还是直接一个个赋值吧
     
-    sla = glb['sla']
-    sa = glb['sa']
-    bt = glb['bt']
-    ru = glb['ru']
-    sl = glb['sl']
-    s = glb['s']
+#     sla = glb['sla']
+#     sa = glb['sa']
+#     bt = glb['bt']
+#     ru = glb['ru']
+#     sl = glb['sl']
+#     s = glb['s']
 
-    tips = b">"
-    
-    def add(size):
-        sl(b"1")
-        sl(bt(size))
-
-    def show(id):
-        pass
-
-    def edit(idx,size,content):
-        sl(b'2')
-        sl(bt(idx))
-        sl(bt(size))
-        s(content)
-
-    def free(idx):
-        sl(b'3')
-        sl(bt(idx))
 
         
-    glb['add'] = add
-    glb['free'] = free
-    glb['show'] = show
-    glb['edit'] = edit
+#     glb['add'] = add
+#     glb['free'] = free
+#     glb['show'] = show
+#     glb['edit'] = edit
 
 
 class heap_helper:

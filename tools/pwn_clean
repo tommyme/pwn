@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+# import sys
 j = os.path.join
 
 root = f"{os.environ['HOME']}/pwn"
@@ -8,13 +9,13 @@ def clean(dst, white_list):
     # 清理某个目录
     for i in os.listdir(dst):
         if i not in white_list:
-            os.remove(j(dst, i))
+            os.system(f"rm -r {j(dst, i)}")
 
 with open("main.py","r") as f:
     content = f.read()
     doing = content.split('loader = Loader("target/')[-1].split('"')[0]
 
-clean(j(root, "server"), ["linux_server", "linux_server64"])
-clean(j(root, "target"), [doing])
+clean(j(root, ".server"), ["linux_server", "linux_server64"])
+clean(j(root, ".target"), [doing])
 print("over.")
 # black_list = ["core"]

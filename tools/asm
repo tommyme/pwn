@@ -26,6 +26,21 @@ data = {
     mov eax, 401000                 | eax = 0x401000 同 lea eax,[0x401000] 
     """,
 
+    "movzx":"""
+    movzx ecx, bx           | movzx 用于将较小值拷贝到较大值中
+                            | ebx=00304000h, ecx=10203040h, after: ecx=00004000h
+    """,
+
+    "movsb":"""
+    movsb means moving string byte
+    它是把 DS:SI 所指地址的一个字节搬移到 ES:DI 所指的地址上(我感觉就是rsi到rdi)
+    执行之后 SI 和 DI 会自动地址向下一个要搬移的地址
+    通常以rep movsb的形式出现
+    """,
+    "pushf":"""
+    push flag reg, 标志寄存器入栈
+    """,
+
     "lea":"""
     lea eax, [ebx+8]        | 把'ebx+8'这个<值>直接赋给 eax
     lea eax, [0x401000]     | eax = 0x401000 同 mov eax,401000  
