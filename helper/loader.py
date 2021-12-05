@@ -5,12 +5,16 @@ import os
 import subprocess
 import re
 from collections import defaultdict, OrderedDict
-j = os.path.join
+from config import target
 
+j = os.path.join
+is_32bit = lambda path: len(os.popen(f"file {path} | grep 32-bit").read()) > 0
+rwx = lambda path: os.system(f"chmod a+rwx {path}")
 class Loader:
-    def __init__(self,root,size,debug=False):
-        self.root = root
-        self.size = size
+    def __init__(self,debug=False):
+        self.root = j(".target",target)
+        self.size = 32 if is_32bit(self.root) else 64
+        info(f"loading a {self.size}-bit file")
         self.arch = 'amd64' if size == 64 else 'i386'
         self.maps = {}
         self.section = {}
@@ -18,6 +22,7 @@ class Loader:
         context(arch=self.arch,os='linux')
         if debug:
             context.log_level = 'debug'
+
     def init(self):
         self.elf = ELF(self.root)
         self.libc = self.elf.libc
@@ -25,7 +30,7 @@ class Loader:
         return self.elf, self.libc, self.rop
 
     def process(self, args, site='node4.buuoj.cn'):
-        print(args)
+        rwx(self.root)
         if args.port:
             return remote(site, args.port)
         elif args.ida:
@@ -42,8 +47,6 @@ class Loader:
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
 
-
-
     def show_ida_patch_code(self,payload,st_addr):
         payload = ba.hexlify(payload).decode()
         step = 4 if self.arch =='i386' else 8
@@ -56,7 +59,6 @@ class Loader:
             a = ''.join([a[2*j:2*(j+1)] for j in range(step)][::-1])
             print("ida_bytes.{}({},0x{})".format(func,hex(st_addr),a))
             st_addr += step
-
 
     def patch_AIO(self,ver:float,dir="",num=-1):
         """
@@ -151,5 +153,10 @@ class Loader:
                 addr = int(addr, 16)
                 self.section[matched[0]] = addr+self.maps["code"]
 
-        
-
+    def buulibc(self,v,arch):
+        return ELF(f".buuoj/{v}/{arch}/libc.so.6")
+    def get_og(self, path=""):
+        path = path if path else self.libc.path
+        cmd = os.popen(f"one_gadget {path} | grep execve | awk -F\" \" '{{print $1}}'")
+        res = cmd.read().strip().split('\n')
+        success(f"og = [{','.join(res)}]")

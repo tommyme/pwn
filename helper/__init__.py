@@ -12,7 +12,6 @@ from pwnlib.util.proc import wait_for_debugger
 from struct import pack
 import os
 from .arg import parser
-# 引入子模块
 from . import (
     qemu,
     heap,
