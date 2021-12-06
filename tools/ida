@@ -1,0 +1,9 @@
+#!/usr/bin/python3
+import sys
+import os
+j = os.path.join
+sys.path.append(j(os.getenv("HOME"), "pwn"))
+from config import path, bit_32
+
+x = "" if bit_32 else "64"
+os.system(f"/mnt/c/pwntools/ida75/75ida{x}.exe -i {path} &")

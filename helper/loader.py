@@ -14,8 +14,8 @@ class Loader:
     def __init__(self,debug=False):
         self.root = j(".target",target)
         self.size = 32 if is_32bit(self.root) else 64
-        info(f"loading a {self.size}-bit file")
-        self.arch = 'amd64' if size == 64 else 'i386'
+        self.arch = 'amd64' if self.size == 64 else 'i386'
+        success(f"loading {self.size}-bit {self.arch}")
         self.maps = {}
         self.section = {}
         self.pid = None

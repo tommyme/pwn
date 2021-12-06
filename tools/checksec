@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 from pwn import ELF
 import sys
-file = sys.argv[1]
-ELF(file)
+import os
+j = os.path.join
+sys.path.append(j(os.getenv("HOME"), "pwn"))
+from config import path
+
+if len(sys.argv) == 1:
+    ELF(path)
+else:
+    path = sys.argv[1]
+ELF(path)
