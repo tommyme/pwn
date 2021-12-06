@@ -1,4 +1,4 @@
-target = "gyctf_2020_some_thing_exceting"
+target="pwnme1"
 import os
 j = os.path.join
 path = j(".target",target)

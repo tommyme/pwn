@@ -1,0 +1,9 @@
+{
+    "files.exclude": {
+		// "**/.git": true,
+        "**/__pycache__": true,
+        "Makefile": true,
+        "tools": true,
+        ".*":true
+	},
+}
