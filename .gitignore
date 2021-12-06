@@ -9,7 +9,7 @@ __pycache__/
 *$py.class
 # C extensions
 *.so
-target/*
+.target/*
 .DS_Store
 # Distribution / packaging
 .Python
