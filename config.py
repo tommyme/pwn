@@ -1,4 +1,4 @@
-target="pwnme1"
+target="pwnme2"
 import os
 j = os.path.join
 path = j(".target",target)

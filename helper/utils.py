@@ -1,7 +1,16 @@
 from functools import wraps
 import binascii as ba
 
+class Info():
+    def __init__(self) -> None:
+        pass
 
+    def update(self, *args, **kwargs):
+        for arg in args:
+            self.update(**arg)
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
 def trans(s):
     if s.startswith('0x'):
         s = s[2:]

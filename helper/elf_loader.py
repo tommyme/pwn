@@ -11,7 +11,7 @@ j = os.path.join
 is_32bit = lambda path: len(os.popen(f"file {path} | grep 32-bit").read()) > 0
 rwx = lambda path: os.system(f"chmod a+rwx {path}")
 class Loader:
-    def __init__(self,debug=False):
+    def __init__(self,args):
         self.root = j(".target",target)
         self.size = 32 if is_32bit(self.root) else 64
         self.arch = 'amd64' if self.size == 64 else 'i386'
@@ -19,8 +19,10 @@ class Loader:
         self.maps = {}
         self.section = {}
         self.pid = None
+        self.io = None
+        self.args = args
         context(arch=self.arch,os='linux')
-        if debug:
+        if args.debug:
             context.log_level = 'debug'
 
     def init(self):
@@ -29,20 +31,20 @@ class Loader:
         self.rop = ROP(self.root)
         return self.elf, self.libc, self.rop
 
-    def process(self, args, site='node4.buuoj.cn'):
+    def process(self, site='node4.buuoj.cn'):
         rwx(self.root)
-        if args.port:
-            return remote(site, args.port)
-        elif args.ida:
+        if self.args.port:
+            io = remote(site, self.args.port)
+        elif self.args.ida:
             v = "" if self.arch == "i386" else "64"
             io = process(f".server/linux_server{v}")
             io.recvuntil(b"...")
             io.recvuntil(b"...")
-            return io
         else:
             io = process(self.root)
             self.pid = io.pid
-            return io
+        self.io = io
+        return io
 
     def psize(self,x):
         return p32(x) if self.arch =='i386' else p64(x)
@@ -97,6 +99,13 @@ class Loader:
         # specify your own libc & specify buuoj libc
         pass
     
+    def update(self, *args, **kwargs):
+        for arg in args:
+            self.update(**arg)
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
+        
     def get_addrs(self, filename:str=None) -> dict:
         """
         Read /proc/pid/maps file to get base address. Return a dictionary obtaining keys: 'code',
@@ -155,6 +164,7 @@ class Loader:
 
     def buulibc(self,v,arch):
         return ELF(f".buuoj/{v}/{arch}/libc.so.6")
+    
     def get_og(self, path=""):
         path = path if path else self.libc.path
         cmd = os.popen(f"one_gadget {path} | grep execve | awk -F\" \" '{{print $1}}'")
