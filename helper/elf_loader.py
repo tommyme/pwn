@@ -27,7 +27,10 @@ class Loader:
 
     def init(self):
         self.elf = ELF(self.root)
-        self.libc = self.elf.libc
+        if self.args.buu:
+            self.libc = self.buulibc(self.args.buu, self.size)
+        else:
+            self.libc = self.elf.libc
         self.rop = ROP(self.root)
         return self.elf, self.libc, self.rop
 

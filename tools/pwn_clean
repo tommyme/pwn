@@ -9,6 +9,7 @@ def clean(dst, white_list, file=True, dir=False, dotfile=False):
     # 清理某个目录
     for i in os.listdir(dst):
         if i not in white_list:
+            print(f"removing {j(dst, i)}")
             os.system(f"rm -r {j(dst, i)}")
 
 clean(j(root, ".server"), ["linux_server", "linux_server64"])
