@@ -6,7 +6,7 @@ import os
 
 def easy_libc(libc, key="", value=0, addr=0):
     if key and value:
-        libc.address = value - libc[key]
+        libc.address = value - libc.sym[key]
     elif addr:
         libc.address = addr
     info_hex(libc.address, "[easy_libc] libc base")

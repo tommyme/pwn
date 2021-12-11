@@ -1,4 +1,4 @@
-target="gyctf_2020_force"
+target="note2"
 import os
 j = os.path.join
 path = j(".target",target)
