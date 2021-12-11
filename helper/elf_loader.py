@@ -32,6 +32,9 @@ class Loader:
         else:
             self.libc = self.elf.libc
         self.rop = ROP(self.root)
+
+        self.get_og() if self.args.og else 0
+
         return self.elf, self.libc, self.rop
 
     def process(self, site='node4.buuoj.cn'):

