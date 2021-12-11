@@ -9,6 +9,7 @@ __pycache__/
 *$py.class
 # C extensions
 *.so
+.helper
 .target/*
 .DS_Store
 # Distribution / packaging

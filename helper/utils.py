@@ -1,16 +1,27 @@
 from functools import wraps
 import binascii as ba
+from helper import info_hex
+from config import pickle_cache
+import os
 
-class Info():
-    def __init__(self) -> None:
-        pass
+def easy_libc(libc, key="", value=0, addr=0):
+    if key and value:
+        libc.address = value - libc[key]
+    elif addr:
+        libc.address = addr
+    info_hex(libc.address, "[easy_libc] libc base")
+    libc.__dict__.update(libc.sym)
+    if os.path.exists(pickle_cache):
+        data = get_pickle_content(pickle_cache)
+        data['og'] = [libc.address+i for i in data['og']]
+        setattr(libc, "one_gadget", data['og'])
 
-    def update(self, *args, **kwargs):
-        for arg in args:
-            self.update(**arg)
+def get_pickle_content(path):
+    import pickle
+    with open(path,"rb") as f:
+        content = pickle.load(f)
+    return content
 
-        for k,v in kwargs.items():
-            setattr(self,k,v)
 def trans(s):
     if s.startswith('0x'):
         s = s[2:]

@@ -5,7 +5,7 @@ import os
 import subprocess
 import re
 from collections import defaultdict, OrderedDict
-from config import target
+from config import target, pickle_cache
 
 j = os.path.join
 is_32bit = lambda path: len(os.popen(f"file {path} | grep 32-bit").read()) > 0
@@ -169,7 +169,20 @@ class Loader:
         return ELF(f".buuoj/{v}/{arch}/libc.so.6")
     
     def get_og(self, path=""):
+        import pickle
         path = path if path else self.libc.path
+        if os.path.exists(pickle_cache):
+            with open(pickle_cache,"rb") as f:
+                cache = pickle.load(f)
+                if cache['path'] == path:
+                    info("detect one gadget cached.")
+                    return
         cmd = os.popen(f"one_gadget {path} | grep execve | awk -F\" \" '{{print $1}}'")
         res = cmd.read().strip().split('\n')
-        success(f"og = [{','.join(res)}]")
+        success(f"og = [{','.join(res)}], writing -> {pickle_cache} ...")
+        with open(pickle_cache,"wb") as f:
+            pickle.dump({
+                "path": self.libc.path ,
+                "og": [int(i, 16) for i in res]
+            }, f)
+        
