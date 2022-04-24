@@ -26,13 +26,10 @@ class Loader:
             context.log_level = 'debug'
 
     def init(self):
+        self.patch_AIO(self.args.patch) if self.args.patch else 0
         self.elf = ELF(self.root)
-        if self.args.buu:
-            self.libc = self.buulibc(self.args.buu, self.size)
-        else:
-            self.libc = self.elf.libc
+        self.libc = self.buulibc(self.args.buu, self.size) if  self.args.buu else self.elf.libc
         self.rop = ROP(self.root)
-
         self.get_og() if self.args.og else 0
 
         return self.elf, self.libc, self.rop

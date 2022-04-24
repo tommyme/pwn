@@ -1,3 +1,5 @@
+main:
+	python3 main.py $A
 2.27:
 	gcc heap.c -g -o heap
 	patchelf --set-interpreter /home/ybw/repos_pwn/glibc-all-in-one/libs/2.27-3ubuntu1_amd64/ld-2.27.so --set-rpath /home/ybw/repos_pwn/glibc-all-in-one/libs/2.27-3ubuntu1_amd64 heap

@@ -7,7 +7,6 @@ import os
 from .arg import args
 
 loader = Loader(args)
-loader.patch_AIO(2.23)
 elf,libc,rop = loader.init()
 io = loader.process()
 import ctypes as c

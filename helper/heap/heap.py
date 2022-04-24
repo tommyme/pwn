@@ -49,6 +49,9 @@ class heap_helper:
         args:
             one_gadget: int (0x4526a)
             realloc:    whether 2 use realloc
+        libc:
+            addr-8: realloc_hook
+            addr:   malloc_hook
         """
         info(f"fake_trunk_addr: {hex(self.fake_fb_trunk)}")
         info(f"malloc_hook_addr: {hex(self.malloc_hook)}")

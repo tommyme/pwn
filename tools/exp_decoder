@@ -1,0 +1,51 @@
+#!/usr/local/bin/python3
+import re
+from rich.console import Console
+from rich.syntax import Syntax
+
+def process_exp(s):
+    my_dict = {
+        "p\.":"",
+        "recvuntil": "ru",
+        "sendlineafter":"sla",
+        "sendafter":"sa",
+    }
+    for k,v in my_dict.items():
+        s = re.sub(k,v,s)
+    syntax = Syntax(s, "python", theme="monokai")
+    console = Console()
+    console.print(syntax)
+    return s
+
+data = """def create_heap(size, content):
+    r.recvuntil(":")
+    r.sendline("1")
+    r.recvuntil(":")
+    r.sendline(str(size))
+    r.recvuntil(":")
+    r.sendline(content)
+
+
+def edit_heap(idx, size, content):
+    r.recvuntil(":")
+    r.sendline("2")
+    r.recvuntil(":")
+    r.sendline(str(idx))
+    r.recvuntil(":")
+    r.sendline(str(size))
+    r.recvuntil(":")
+    r.sendline(content)
+
+
+def del_heap(idx):
+    r.recvuntil(":")
+    r.sendline("3")
+    r.recvuntil(":")
+    r.sendline(str(idx))"""
+while(1):
+    line = input()
+    if line == '':
+        break
+    data += line+'\n'
+
+process_exp(data)

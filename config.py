@@ -1,4 +1,4 @@
-target="note2"
+target="pwn"
 import os
 j = os.path.join
 path = j(".target",target)
