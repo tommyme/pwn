@@ -1,7 +1,12 @@
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
-
+### ybw ###
+.gdb_history
+.target/*
+!.target/placeholder
+.server/*
+!.server/linux_server*
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -10,7 +15,6 @@ __pycache__/
 # C extensions
 *.so
 .helper
-.target/*
 .DS_Store
 # Distribution / packaging
 .Python
