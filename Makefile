@@ -7,6 +7,6 @@ main:
 2.23:
 	gcc heap.c -g -o heap
 	patchelf --set-interpreter /home/ybw/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_amd64/ld-2.23.so --set-rpath /home/ybw/repos_pwn/glibc-all-in-one/libs/2.23-0ubuntu11.3_amd64 heap
-	echo "dir ~/.glibc/glibc-2.23/malloc" > .gdbinit
+	echo "dir ~/.glibc/glibc-2.23/malloc\nfile heap\nstart" > .gdbinit
 clean:
 	python3 tools/pwn_clean

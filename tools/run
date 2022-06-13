@@ -1,0 +1,14 @@
+#!/usr/bin/python3
+import os
+import sys
+import re
+filename = sys.argv[1]
+suffix = re.search(r'\.([^.]+)$', filename).group(1)
+if suffix == 'c':
+    os.system('gcc -o a.out ' + filename)
+    os.system('./a.out')
+    os.system('rm a.out')
+elif suffix == 'cpp':
+    os.system('g++ -o a.out ' + filename)
+    os.system('./a.out')
+    os.system('rm a.out')

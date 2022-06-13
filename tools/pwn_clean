@@ -13,6 +13,6 @@ def clean(dst, white_list, file=True, dir=False, dotfile=False):
             os.system(f"rm -r {j(dst, i)}")
 
 clean(j(root, ".server"), ["linux_server", "linux_server64"])
-clean(j(root, ".target"), [])
+clean(j(root, ".target"), ["placeholder"])
 print("over.")
 # black_list = ["core"]

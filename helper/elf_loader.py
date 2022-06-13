@@ -169,6 +169,9 @@ class Loader:
         return ELF(f".buuoj/{v}/{arch}/libc.so.6")
     
     def get_og(self, path=""):
+        """
+        get one gadget
+        """
         import pickle
         path = path if path else self.libc.path
         if os.path.exists(pickle_cache):
