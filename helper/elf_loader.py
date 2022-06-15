@@ -34,8 +34,11 @@ class Loader:
 
         return self.elf, self.libc, self.rop
 
-    def process(self, site='node4.buuoj.cn'):
+    def process(self):
+        # use buuoj as host by default
+        site = args.host if args.host else 'node4.buuoj.cn' 
         rwx(self.root)
+        # when specify port, will pwn remote
         if self.args.port:
             io = remote(site, self.args.port)
         elif self.args.ida:

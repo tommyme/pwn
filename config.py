@@ -1,4 +1,4 @@
-target="pwn200"
+target="ez_pwn"
 import os
 j = os.path.join
 path = j(".target",target)

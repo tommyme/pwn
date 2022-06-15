@@ -46,7 +46,7 @@ def success_hex(addr:int, msg=""):
 def info_hex(addr:int, msg=""):
     info(f"{msg}: {hex(addr)}")
 
-def leak():
+def leak() -> int: 
     """
     leak libc address
     """

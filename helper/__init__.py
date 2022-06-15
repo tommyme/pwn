@@ -6,6 +6,9 @@ from struct import pack
 import os
 from .arg import args
 
+
+context.terminal = ['cmd.exe', '/c', 'wt', '-w', '0', 'sp', 'wsl', '-e']
+
 loader = Loader(args)
 elf,libc,rop = loader.init()
 io = loader.process()
