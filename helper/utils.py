@@ -1,6 +1,6 @@
 from functools import wraps
 import binascii as ba
-from helper import info_hex
+from pwn import info
 from config import pickle_cache
 import os
 
@@ -9,7 +9,7 @@ def easy_libc(libc, key="", value=0, addr=0):
         libc.address = value - libc.sym[key]
     elif addr:
         libc.address = addr
-    info_hex(libc.address, "[easy_libc] libc base")
+    info(f"[easy_libc] libc base: {hex(libc.address)}")
     libc.__dict__.update(libc.sym)
     if os.path.exists(pickle_cache):
         data = get_pickle_content(pickle_cache)

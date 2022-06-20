@@ -42,7 +42,9 @@ class heap_helper:
         self.fake_fb_trunk = self.malloc_hook - 0x23
         success(f"main_arena | {hex(self.main_arena)}")
         success(f"libc_base | {hex(self.libc.address)}")
-    
+        success(f"malloc_hook | {hex(self.malloc_hook)}")
+        success(f"free_hook | {hex(self.free_hook)}")
+        
     def House_of_spirit(self, one_gadget, realloc=False):
         """
         fill fake trunk with one_gadget

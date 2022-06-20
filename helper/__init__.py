@@ -1,13 +1,13 @@
-from helper.mbuiltins import *
 from helper.elf_loader import Loader
 from pwn import *
 from pwnlib.util.proc import wait_for_debugger
 from struct import pack
+from typing import Union
 import os
 from .arg import args
 
 
-context.terminal = ['cmd.exe', '/c', 'wt', '-w', '0', 'sp', 'wsl', '-e']
+context.terminal = ['wt.exe', '-w', '0', 'sp', 'wsl', '-e']
 
 loader = Loader(args)
 elf,libc,rop = loader.init()
@@ -25,15 +25,16 @@ uu32   = lambda data : u32(data.ljust(4,b'\x00'))
 uu64   = lambda data : u64(data.ljust(8,b'\x00'))
 
 
-def to_bytes(x: int|str|bytes):
+def to_bytes(x: Union[int, str, bytes]):
     """
     如果是int 就转成字符串再转成bytes
+    如果是str 就直接.encode('latin-1') 转成bytes
     """
     if isinstance(x, int):
         return str(x).encode()
         # return x.to_bytes(loader.size//8, 'little')
     elif isinstance(x, str):
-        return x.encode()
+        return x.encode('latin-1')
     else:
         return x
 
@@ -50,8 +51,11 @@ def leak() -> int:
     else:
         return uu64(ru(b"\x7f")[-6:])
 
+def attach():
+    gdb.attach(io)
+    pause()
+
 import ctypes as c
-from helper.abbreviation import *
 from . import (
     qemu,
     heap,

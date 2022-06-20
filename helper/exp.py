@@ -4,6 +4,9 @@ import subprocess
 from helper import loader
 from collections import defaultdict as dd
 
+# TODO 添加对LibcSearcher的支持
+# https://github.com/dev2ero/LibcSearcher
+
 def get_output(s):
     info(f"running cmd: {s}")
     res = int(os.popen(s).readlines()[0][:-1],16)

