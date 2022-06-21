@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+from pwn import info, error, success
+import os
+import click
+j = os.path.join
+
+class Binary:
+    def __init__(self, path):
+        self.path = path
+        self.bit: int = 32 if self.is_32bit() else 64
+        self.arch: str = "i386" if self.bit == 32 else "amd64"
+    
+    def is_32bit(self): 
+        return len(os.popen(f"file {self.path} | grep 32-bit").read()) > 0
+
+
+def patch_AIO(arch, binary_path, ver:float, libc_path=""):
+    """
+    args:
+    - arch: i386 or amd64
+    - root: binary path
+    - ver: libc version
+    - libc_path: libc path(not in glibc_all_in_one)
+    """        
+
+    aio_root = j(os.getenv("HOME"),"repos_pwn/glibc-all-in-one/libs")
+    glibc_list = [i for i in os.listdir(aio_root) if str(ver) in i and f"{arch}" in i]
+    if not glibc_list: 
+        error(
+            f"no glibc found for {ver} " \
+            "please download it in glibc-aio"
+        )
+    info("idx of glibc to patch:(default is 0)\n{}".format('\n'.join(glibc_list)))
+    char = input()
+    idx = int(char) if char.isdigit() else 0
+    success(f"going to patch {glibc_list[idx]}...")
+    
+    # generate info and command
+    glibc = j(aio_root, glibc_list[idx]) if not libc_path else libc_path
+    glibc_ld = glibc+f'/ld-{ver}.so'
+    # provide a way of patching when running 
+    glibc_16_pwnfile = [
+        glibc_ld,
+        '--library-path',
+        glibc,
+        binary_path
+    ]
+    cmd = ["patchelf", f"--set-interpreter {glibc_ld}", f"--set-rpath {glibc}", f"{binary_path}"]
+    cmd_formatted = ' \\ \n'.join(cmd)
+    info(f"patch_cmd: {cmd_formatted}")
+    os.system(' '.join(cmd))
+
+    return glibc, glibc_ld, glibc_16_pwnfile
+
+
+@click.command()
+@click.argument("path")
+@click.argument("ver")
+def patch_it(path, ver):
+    """
+    patch glibc-all-in-one
+    """
+    binary = Binary(path)
+    patch_AIO(binary.arch, binary.path, ver)
+
+if __name__ == "__main__":
+    patch_it()

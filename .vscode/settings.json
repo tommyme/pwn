@@ -2,6 +2,10 @@
   "files.exclude": {
     "**/__pycache__": true,
     "Makefile": true,
-    ".gdb_history": true
+    ".gdb_history": true,
+    ".vscode": true,
+    ".target":true,
+    ".server":true,
+    ".buuoj":true,
   }
 }

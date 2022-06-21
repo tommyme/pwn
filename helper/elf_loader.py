@@ -5,23 +5,24 @@ import os
 import subprocess
 import re
 from collections import defaultdict, OrderedDict
-from config import target, pickle_cache
+from helper.config import pickle_cache, target_binary
 
 j = os.path.join
-is_32bit = lambda path: len(os.popen(f"file {path} | grep 32-bit").read()) > 0
-rwx = lambda path: os.system(f"chmod a+rwx {path}")
+def rwx(path): return os.system(f"chmod a+rwx {path}")
+
+
 class Loader:
-    def __init__(self,args):
-        self.root = j(".target",target)
-        self.size = 32 if is_32bit(self.root) else 64
-        self.arch = 'amd64' if self.size == 64 else 'i386'
+    def __init__(self, args):
+        self.root = target_binary.path
+        self.size = target_binary.bit
+        self.arch = target_binary.arch
         success(f"loading {self.size}-bit {self.arch}")
         self.maps = {}
         self.section = {}
         self.pid = None
         self.io = None
         self.args = args
-        context(arch=self.arch,os='linux')
+        context(arch=self.arch, os='linux')
         if args.debug:
             context.log_level = 'debug'
 
@@ -32,9 +33,14 @@ class Loader:
         REMOTE MODE:
             get elf, libc(buuoj), rop of binary
         """
-        self.patch_AIO(self.args.patch) if self.args.patch else 0
+        self.patch(self.args.patch) if self.args.patch else 0
         self.elf = ELF(self.root)
-        self.libc = self.buulibc(self.args.buu, self.size) if self.args.buu else self.elf.libc
+        # TODO: there is some question: ideally, we want patch libc into buu_libc
+        #   in order to keep one gadgets are the same in local and remote
+        #   the way to achieve that is:
+        #       resolve the path of libc in buuoj and pass it to self.patch()
+        self.libc = self.buulibc(
+            self.args.buu, self.size) if self.args.buu else self.elf.libc
         self.rop = ROP(self.root)
         self.get_og() if self.args.og else 0
 
@@ -42,7 +48,7 @@ class Loader:
 
     def process(self):
         # use buuoj as host by default
-        site = args.host if args.host else 'node4.buuoj.cn' 
+        site = args.host if args.host else 'node4.buuoj.cn'
         rwx(self.root)
         # when specify port, will pwn remote
         if self.args.port:
@@ -58,67 +64,81 @@ class Loader:
         self.io = io
         return io
 
-    def psize(self,x):
-        return p32(x) if self.arch =='i386' else p64(x)
+    def psize(self, x):
+        return p32(x) if self.arch == 'i386' else p64(x)
 
-    def show_ida_patch_code(self,payload,st_addr):
+    def show_ida_patch_code(self, payload, st_addr):
         payload = ba.hexlify(payload).decode()
-        step = 4 if self.arch =='i386' else 8
-        func = "patch_dword" if self.arch =='i386' else "patch_qword"
+        step = 4 if self.arch == 'i386' else 8
+        func = "patch_dword" if self.arch == 'i386' else "patch_qword"
         size = step * 2
         rg = len(payload)//size
-        rg = rg+1 if len(payload)%size != 0 else rg
+        rg = rg+1 if len(payload) % size != 0 else rg
         for i in range(rg):
             a = payload[i*size:(i+1)*size]
             a = ''.join([a[2*j:2*(j+1)] for j in range(step)][::-1])
-            print("ida_bytes.{}({},0x{})".format(func,hex(st_addr),a))
+            print("ida_bytes.{}({},0x{})".format(func, hex(st_addr), a))
             st_addr += step
 
-    def patch_AIO(self,ver:float,dir="",num=-1):
+    def patch(self, ver: float, libc_path=""):
         """
-        题目中给的libc一般是glibcAIO里面的一种, 
-            buuoj里面ubt18的`glibc`就是AIO的`ubt1-2.27`
+        buuoj ubt18 glibc -- AIO ubt1-2.27
         ld相同版本可以混用
 
         args:
         - ver: libc version
-        - num: sub version(eg: 2.27-3ubuntu`1.2`_amd64)
-        """        
-        info("""
-        buu18 libc 对应 AIO 2.27-1
-        buu16 没有对应
-        """)
-        root = j(os.getenv("HOME"),"repos_pwn/glibc-all-in-one/libs")
-        default_num = {2.23:11.3,2.27:1,2.31:9.2}
-        num = default_num[ver] if num < 0 else num
-        glibc = [i for i in os.listdir(root) if str(ver) in i and f"ubuntu{num}_{self.arch}" in i][0]
-        success(f"going to patch {glibc}...")
-        self.glibc = j(root,glibc)
-        self.glibc_ld = self.glibc+f'/ld-{ver}.so'
-        self.glibc_16_pwnfile = [
-            self.glibc_ld,
-            '--library-path',
-            self.glibc,
-            self.root
-        ]
-        num = '32' if self.arch == 'i386' else '64'
-        self.glibc = dir if dir else self.glibc
-        cmd = f"patchelf --set-interpreter {self.glibc_ld} --set-rpath {self.glibc} {self.root}"
-        info(f"patch_cmd: {cmd}")
-        os.system(cmd)
+        - libc_path: libc path(not in glibc_all_in_one)
+        """
+        # sync with tools/patch.py
+        def patch_AIO(arch, binary_path, ver:float, libc_path=""):
+            """
+            args:
+            - arch: i386 or amd64
+            - root: binary path
+            - ver: libc version
+            - libc_path: libc path(not in glibc_all_in_one)
+            """        
 
-    def patch(self):
-        # specify your own libc & specify buuoj libc
-        pass
-    
+            aio_root = j(os.getenv("HOME"),"repos_pwn/glibc-all-in-one/libs")
+            glibc_list = [i for i in os.listdir(aio_root) if str(ver) in i and f"{arch}" in i]
+            if not glibc_list: 
+                error(
+                    f"no glibc found for {ver} " \
+                    "please download it in glibc-aio"
+                )
+            info("idx of glibc to patch:(default is 0)\n{}".format('\n'.join(glibc_list)))
+            char = input()
+            idx = int(char) if char.isdigit() else 0
+            success(f"going to patch {glibc_list[idx]}...")
+            
+            # generate info and command
+            glibc = j(aio_root, glibc_list[idx]) if not libc_path else libc_path
+            glibc_ld = glibc+f'/ld-{ver}.so'
+            # provide a way of patching when running 
+            glibc_16_pwnfile = [
+                glibc_ld,
+                '--library-path',
+                glibc,
+                binary_path
+            ]
+            cmd = ["patchelf", f"--set-interpreter {glibc_ld}", f"--set-rpath {glibc}", f"{binary_path}"]
+            cmd_formatted = ' \\ \n'.join(cmd)
+            info(f"patch_cmd: {cmd_formatted}")
+            os.system(' '.join(cmd))
+
+            return glibc, glibc_ld, glibc_16_pwnfile
+
+        self.glibc, self.glibc_ld, self.glibc_16_pwnfile = \
+            patch_AIO(self.arch, self.root, ver, libc_path)
+
     def update(self, *args, **kwargs):
         for arg in args:
             self.update(**arg)
 
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-        
-    def get_addrs(self, filename:str=None) -> dict:
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def get_addrs(self, filename: str = None) -> dict:
         """
         Read /proc/pid/maps file to get base address. Return a dictionary obtaining keys: 'code',
         'libc', 'ld', 'stack', 'heap', 'vdso'.
@@ -126,27 +146,29 @@ class Loader:
         Returns:
             dict: All segment address. Key: str, Val: int.
         """
-        
+
         assert isinstance(self.pid, int), "error type!"
         res = None
         try:
-            res = subprocess.check_output(["cat", f"/proc/{self.pid}/maps"]).decode().split("\n")
+            res = subprocess.check_output(
+                ["cat", f"/proc/{self.pid}/maps"]).decode().split("\n")
         except:
             error(f"cat /proc/{self.pid}/maps failed!")
-        _d = defaultdict(int,{})
+        _d = defaultdict(int, {})
         code_flag = 0
         libc_flag = 0
         ld_flag = 0
 
         for r in res:
-            rc = re.compile(r"^([0123456789abcdef]{6,14})-([0123456789abcdef]{6,14})", re.S)
+            rc = re.compile(
+                r"^([0123456789abcdef]{6,14})-([0123456789abcdef]{6,14})", re.S)
             rc = rc.findall(r)
             if len(rc) != 1 or len(rc[0]) != 2:
                 continue
             start_addr = int(rc[0][0], base=16)
             end_addr = int(rc[0][1], base=16)
 
-            if  (not _d['code']) and self.root in r:
+            if (not _d['code']) and self.root in r:
                 _d['code'] = start_addr
             elif (not libc_flag) and ("/libc-2." in r or "/libc.so" in r):
                 libc_flag = 1
@@ -157,26 +179,27 @@ class Loader:
             elif "heap" in r:
                 _d['heap'] = start_addr
             elif "stack" in r:
-                _d['stack'] = start_addr  
+                _d['stack'] = start_addr
             elif "vdso" in r:
                 _d['vdso'] = start_addr
         self.maps.update(_d)
 
         try:
-            res = subprocess.check_output(["readelf", "-S", self.root]).decode().split("\n")
+            res = subprocess.check_output(
+                ["readelf", "-S", self.root]).decode().split("\n")
         except:
             error(f"readelf -S {self.root} failed!")
-        
+
         for line in res:
-            matched = re.findall(r"\.[a-z\.]+",line)
+            matched = re.findall(r"\.[a-z\.]+", line)
             if matched:
-                addr, offset = re.findall(r"[\da-f]{3,}",line)
+                addr, offset = re.findall(r"[\da-f]{3,}", line)
                 addr = int(addr, 16)
                 self.section[matched[0]] = addr+self.maps["code"]
 
-    def buulibc(self,v,arch):
-        return ELF(f".buuoj/{v}/{arch}/libc.so.6")
-    
+    def buulibc(self, v:int, bit:int):
+        return ELF(f".buuoj/{v}_{bit}_libc.so.6")
+
     def get_og(self, path=""):
         """
         get one gadget
@@ -184,17 +207,17 @@ class Loader:
         import pickle
         path = path if path else self.libc.path
         if os.path.exists(pickle_cache):
-            with open(pickle_cache,"rb") as f:
+            with open(pickle_cache, "rb") as f:
                 cache = pickle.load(f)
                 if cache['path'] == path:
                     info("detect one gadget cached.")
                     return
-        cmd = os.popen(f"one_gadget {path} | grep execve | awk -F\" \" '{{print $1}}'")
+        cmd = os.popen(
+            f"one_gadget {path} | grep execve | awk -F\" \" '{{print $1}}'")
         res = cmd.read().strip().split('\n')
         success(f"og = [{','.join(res)}], writing -> {pickle_cache} ...")
-        with open(pickle_cache,"wb") as f:
+        with open(pickle_cache, "wb") as f:
             pickle.dump({
-                "path": self.libc.path ,
+                "path": self.libc.path,
                 "og": [int(i, 16) for i in res]
             }, f)
-        

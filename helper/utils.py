@@ -1,10 +1,10 @@
 from functools import wraps
 import binascii as ba
 from pwn import info
-from config import pickle_cache
 import os
 
 def easy_libc(libc, key="", value=0, addr=0):
+    from helper.config import pickle_cache
     if key and value:
         libc.address = value - libc.sym[key]
     elif addr:
@@ -22,38 +22,11 @@ def get_pickle_content(path):
         content = pickle.load(f)
     return content
 
-def trans(s):
-    if s.startswith('0x'):
-        s = s[2:]
-    s = s.rjust(size//4, '0')
-    res = []
-    for i in range(len(s)//2):
-        res.append(s[2*i:2*i+2])
-
-    return " ".join(res[::-1])
-
-
-def transs(ss):
-    return ' '.join([trans(i) for i in ss])
-
-
-def show_ida_patch(payload, pos):
-    print("\nshow_ida_patch : ")
-    print(pos*'a'+(len(payload)-pos)*'*')
-    res = ' '.join(["%02x" % i if id % (size//4) !=
-          0 else "| %02x" % i for id, i in enumerate(payload[pos:])])
-    [print(i.strip()) for i in res.split('|')]
-
-
-def log(a_func):
-    @wraps(a_func)
-    def decorator(*args):
-        res = a_func(*args)
-        print("{}: {}".format(a_func.__name__,res))
-    return decorator
-
-def nan(a_func):
-    @wraps(a_func)
-    def decorator(*args):
-        res = a_func(*args)
-    return decorator
+class Binary:
+    def __init__(self, path):
+        self.path = path
+        self.bit: int = 32 if self.is_32bit() else 64
+        self.arch: str = "i386" if self.bit == 32 else "amd64"
+    
+    def is_32bit(self): 
+        return len(os.popen(f"file {self.path} | grep 32-bit").read()) > 0
